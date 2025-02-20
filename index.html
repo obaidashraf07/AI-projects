@@ -2,190 +2,167 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Voting System</title>
+    <title>Crypto Messenger</title>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1abc9c, #3498db);
+            animation: gradient 15s ease infinite;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+        }
+
+        .navbar a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+
+        .navbar a:hover {
+            background: var(--secondary);
+            color: white;
+            transform: translateY(-2px);
         }
 
         .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .login-section, .voting-section, .results-section {
-            display: none;
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            resize: vertical;
         }
 
-        .active-section {
-            display: block;
-        }
-
-        .candidate-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        button {
-            background-color: #4CAF50;
+        .btn {
+            background: var(--secondary);
             color: white;
-            padding: 10px 20px;
             border: none;
+            padding: 0.8rem 1.5rem;
             border-radius: 5px;
             cursor: pointer;
+            margin: 0.5rem;
         }
 
-        button:hover {
-            background-color: #45a049;
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .error-message {
-            color: red;
-            margin-top: 10px;
+        .theme-switcher {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
         }
 
-        #resultsChart {
-            margin-top: 20px;
+        footer {
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            padding: 1rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="#" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">Home</a>
+        <a href="#" onclick="alert('About Crypto Messenger')">About</a>
+        <a href="#" ondblclick="alert('Double-click detected!')">Contact</a>
+    </nav>
+
+    <button class="theme-switcher btn" onclick="toggleTheme()">🌓 Toggle Theme</button>
+
     <div class="container">
-        <!-- Login Section -->
-        <div class="login-section active-section" id="loginSection">
-            <h2>Voter Login</h2>
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button onclick="login()">Login</button>
-            <div class="error-message" id="loginError"></div>
-        </div>
-
-        <!-- Voting Section -->
-        <div class="voting-section" id="votingSection">
-            <h2>Cast Your Vote</h2>
-            <div id="candidatesList"></div>
-            <button onclick="showResults()">View Results</button>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results-section" id="resultsSection">
-            <h2>Live Results</h2>
-            <canvas id="resultsChart"></canvas>
-            <button onclick="goBackToVoting()">Back to Voting</button>
-        </div>
+        <h2 onmouseover="this.style.color='#e74c3c'" onmouseout="this.style.color='var(--primary)'">Secret Messenger</h2>
+        <textarea id="message" placeholder="Enter your message..." onfocus="this.style.borderColor='#e74c3c'" onblur="this.style.borderColor='var(--secondary)'"></textarea>
+        <input type="password" id="key" placeholder="Encryption Key" onkeypress="handleKeyPress(event)">
+        <button class="btn" onclick="encrypt()">🔒 Encrypt</button>
+        <button class="btn" onclick="decrypt()">🔓 Decrypt</button>
+        <div id="output" style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.05); border-radius: 8px;"></div>
     </div>
 
+    <footer>
+        <p>© 2023 Crypto Messenger. All rights reserved.</p>
+    </footer>
+
     <script>
-        // Initialize candidates data in localStorage
-        if (!localStorage.getItem('candidates')) {
-            const initialCandidates = [
-                { id: 1, name: "Candidate PPP", votes: 0 },
-                { id: 2, name: "Candidate pti", votes: 0 },
-                { id: 3, name: "Candidate Pml(n)", votes: 0 }
-            ];
-            localStorage.setItem('candidates', JSON.stringify(initialCandidates));
+        let isDarkMode = false;
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.style.backgroundColor = isDarkMode ? '#2c3e50' : '#f0f0f0';
+            document.body.style.color = isDarkMode ? 'white' : 'black';
         }
 
-        // Hardcoded voter credentials (for demonstration)
-        const validVoters = {
-            "user1": "pass123",
-            "user2": "pass123"
-        };
+        function encrypt() {
+            const message = document.getElementById('message').value;
+            const key = document.getElementById('key').value;
+            const encrypted = CryptoJS.AES.encrypt(message, key).toString();
+            document.getElementById('output').innerHTML = `<strong>Encrypted:</strong> ${encrypted}`;
+        }
 
-        function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (validVoters[username] && validVoters[username] === password) {
-                showSection('votingSection');
-                loadCandidates();
-            } else {
-                document.getElementById('loginError').textContent = "Invalid credentials!";
+        function decrypt() {
+            const encrypted = document.getElementById('message').value;
+            const key = document.getElementById('key').value;
+            try {
+                const decrypted = CryptoJS.AES.decrypt(encrypted, key).toString(CryptoJS.enc.Utf8);
+                document.getElementById('output').innerHTML = `<strong>Decrypted:</strong> ${decrypted}`;
+            } catch (e) {
+                alert('Invalid key or encrypted message!');
             }
         }
 
-        function loadCandidates() {
-            const candidates = JSON.parse(localStorage.getItem('candidates'));
-            const candidatesList = document.getElementById('candidatesList');
-            candidatesList.innerHTML = '';
-
-            candidates.forEach(candidate => {
-                const card = document.createElement('div');
-                card.className = 'candidate-card';
-                card.innerHTML = `
-                    <div>${candidate.name}</div>
-                    <button onclick="castVote(${candidate.id})">Vote</button>
-                `;
-                candidatesList.appendChild(card);
-            });
-        }
-
-        function castVote(candidateId) {
-            const candidates = JSON.parse(localStorage.getItem('candidates'));
-            const candidate = candidates.find(c => c.id === candidateId);
-            candidate.votes++;
-            localStorage.setItem('candidates', JSON.stringify(candidates));
-            alert('Vote cast successfully!');
-            showResults();
-        }
-
-        function showResults() {
-            showSection('resultsSection');
-            renderChart();
-        }
-
-        function renderChart() {
-            const candidates = JSON.parse(localStorage.getItem('candidates'));
-            const ctx = document.getElementById('resultsChart').getContext('2d');
-            
-            if (window.myChart) {
-                window.myChart.destroy();
+        function handleKeyPress(e) {
+            if(e.key === 'Enter') {
+                encrypt();
             }
-
-            window.myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: candidates.map(c => c.name),
-                    datasets: [{
-                        label: 'Votes',
-                        data: candidates.map(c => c.votes),
-                        backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
         }
 
-        function showSection(sectionId) {
-            document.querySelectorAll('.container > div').forEach(div => {
-                div.classList.remove('active-section');
-            });
-            document.getElementById(sectionId).classList.add('active-section');
-        }
-
-        function goBackToVoting() {
-            showSection('votingSection');
-        }
+        // Include CryptoJS library
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+        document.head.appendChild(script);
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
