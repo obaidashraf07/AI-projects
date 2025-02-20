@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Voting System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .login-section, .voting-section, .results-section {
+            display: none;
+        }
+
+        .active-section {
+            display: block;
+        }
+
+        .candidate-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+
+        #resultsChart {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div class="login-section active-section" id="loginSection">
+            <h2>Voter Login</h2>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button onclick="login()">Login</button>
+            <div class="error-message" id="loginError"></div>
+        </div>
+
+        <!-- Voting Section -->
+        <div class="voting-section" id="votingSection">
+            <h2>Cast Your Vote</h2>
+            <div id="candidatesList"></div>
+            <button onclick="showResults()">View Results</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <h2>Live Results</h2>
+            <canvas id="resultsChart"></canvas>
+            <button onclick="goBackToVoting()">Back to Voting</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize candidates data in localStorage
+        if (!localStorage.getItem('candidates')) {
+            const initialCandidates = [
+                { id: 1, name: "Candidate PPP", votes: 0 },
+                { id: 2, name: "Candidate pti", votes: 0 },
+                { id: 3, name: "Candidate Pml(n)", votes: 0 }
+            ];
+            localStorage.setItem('candidates', JSON.stringify(initialCandidates));
+        }
+
+        // Hardcoded voter credentials (for demonstration)
+        const validVoters = {
+            "user1": "pass123",
+            "user2": "pass123"
+        };
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (validVoters[username] && validVoters[username] === password) {
+                showSection('votingSection');
+                loadCandidates();
+            } else {
+                document.getElementById('loginError').textContent = "Invalid credentials!";
+            }
+        }
+
+        function loadCandidates() {
+            const candidates = JSON.parse(localStorage.getItem('candidates'));
+            const candidatesList = document.getElementById('candidatesList');
+            candidatesList.innerHTML = '';
+
+            candidates.forEach(candidate => {
+                const card = document.createElement('div');
+                card.className = 'candidate-card';
+                card.innerHTML = `
+                    <div>${candidate.name}</div>
+                    <button onclick="castVote(${candidate.id})">Vote</button>
+                `;
+                candidatesList.appendChild(card);
+            });
+        }
+
+        function castVote(candidateId) {
+            const candidates = JSON.parse(localStorage.getItem('candidates'));
+            const candidate = candidates.find(c => c.id === candidateId);
+            candidate.votes++;
+            localStorage.setItem('candidates', JSON.stringify(candidates));
+            alert('Vote cast successfully!');
+            showResults();
+        }
+
+        function showResults() {
+            showSection('resultsSection');
+            renderChart();
+        }
+
+        function renderChart() {
+            const candidates = JSON.parse(localStorage.getItem('candidates'));
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: candidates.map(c => c.name),
+                    datasets: [{
+                        label: 'Votes',
+                        data: candidates.map(c => c.votes),
+                        backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.container > div').forEach(div => {
+                div.classList.remove('active-section');
+            });
+            document.getElementById(sectionId).classList.add('active-section');
+        }
+
+        function goBackToVoting() {
+            showSection('votingSection');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
