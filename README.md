@@ -1,4 +1,4 @@
-# project
+# AI projects
 learning stage
 <br>
 online voting system
